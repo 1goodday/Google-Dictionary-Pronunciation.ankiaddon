@@ -9,7 +9,7 @@ If you enjoy the add-on, you can:
 [Anki 2.1.x](https://apps.ankiweb.net/) installed on your system
 
 ## Installation and Usage
-Refer to [Add-on link on Anki website](https://ankiweb.net/shared/info/xxxxxxx).
+Refer to [Add-on link on Anki website](https://ankiweb.net/shared/info/1346635841).
 
 ## Version History
 * 1.0
@@ -30,8 +30,8 @@ and thanks to [Jadi](https://github.com/jadijadi)!
 ## Disclaimer
 This code includes functions that use Google Search results and download pronunciation audio files from Google servers. The author does not accept any responsibility for any restriction (IP block, ...) on a user to access Google's services resulting from the use of this add-on.
 
-Moderate use of the add-on and avoiding any change in the code for batch-use is recommended. It is also suggested to use one's own User-Agent in the Config section instead of the default one to minimize the above-mentioned risks.
+The moderate use of the add-on and avoiding any change in the code for batch use is recommended. It is also suggested to use one's own User-Agent in the Config section instead of the default one to minimize the above-mentioned risks.
 
 ## License
-Copyright (c) 2021  Roozbeh Sarraf  roozbeh_sarraf@outlook.com  
+Copyright (c) 2021  Roozbeh Sarraf  one_goodday@outlook.com  
 Licensed under MIT License
