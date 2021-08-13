@@ -24,7 +24,8 @@ by:
 ##### Resources to learn Python:
 [Python for Everybody](https://www.py4e.com/)  
 by:  
-[Dr. Chuck](http://www.dr-chuck.com/) 
+[Dr. Chuck](http://www.dr-chuck.com/)
+
 and thanks to [Jadi](https://github.com/jadijadi)!
 
 ## Disclaimer
