@@ -7,7 +7,6 @@
 # Licensed under MIT License
 
 from . import anki_funcs, settings
-from anki.hooks import addHook
 from aqt import gui_hooks
 from aqt import mw
 import warnings
@@ -17,9 +16,9 @@ import warnings
 # messages disappear/appear during the use.
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# Adds a new button to the editor, and hooks "add_pronunciation_button"
+# Adds a new button to the editor, and hooks "add_buttons"
 # function to that.
-addHook('setupEditorButtons', anki_funcs.add_pronunciation_button)
+gui_hooks.editor_did_init_buttons.append(anki_funcs.add_buttons)
 
 # Refer to notes in anki webview.py for this line of code.
 mw.addonManager.setWebExports(__name__, r"web/.*(css|js)")
@@ -27,4 +26,4 @@ mw.addonManager.setWebExports(__name__, r"web/.*(css|js)")
 # Adds labels to play buttons if selected in the user config file (config.json).
 if settings.add_play_button_labels:
     gui_hooks.webview_will_set_content.append(anki_funcs.new_play_button_css)
-    gui_hooks.card_will_show.append(anki_funcs.add_button_labels)
+    gui_hooks.card_will_show.append(anki_funcs.add_play_button_labels)

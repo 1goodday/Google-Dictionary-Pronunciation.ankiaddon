@@ -77,6 +77,3 @@ def search_google(word: str) -> List[Tuple[str, str]]:
             settings.patterns(word).google_define_search_url, word)
 
     return mp3_urls_and_filenames
-
-    if len(mp3_urls_and_filenames) == 0:
-        return

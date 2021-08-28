@@ -60,7 +60,7 @@ def _add_pronunciation_mp3s(editor: editor.Editor) -> None:
 
     Returns:
         None. If successful, adds the [sound:filename.mp3] tags to the entries
-        and the related audio files in the collection.media folder (in a typical 
+        and the related audio files in the collection.media folder (in a typical
         Windows installation in:
         C:\_Users\_your_name\AppData\Roaming\Anki2\_your_name\collection.media').
         If unsuccessful, quits without any change.
@@ -120,12 +120,12 @@ def _add_pronunciation_mp3s(editor: editor.Editor) -> None:
 
     # 5
     try_adding_GB_pronunciation = try_adding_US_pronunciation = False
-    if settings.add_GB_pronunciation_flag and (not(GB_pronunciation_exists) or settings.keep_duplicates_flag):
+    if settings.add_GB_pronunciation and (not(GB_pronunciation_exists) or settings.keep_pronunciation_duplicates):
         try_adding_GB_pronunciation = True
-    if settings.add_US_pronunciation_flag and (not(US_pronunciation_exists) or settings.keep_duplicates_flag):
+    if settings.add_US_pronunciation and (not(US_pronunciation_exists) or settings.keep_pronunciation_duplicates):
         try_adding_US_pronunciation = True
 
-    if settings.US_first:
+    if settings.US_pronunciation_first:
         if (requests.get(mp3_url_us).status_code == 200) and try_adding_US_pronunciation:
             file_path_us = editor.urlToFile(mp3_url_us)
             editor.addMedia(file_path_us)
@@ -144,24 +144,206 @@ def _add_pronunciation_mp3s(editor: editor.Editor) -> None:
             editor.addMedia(file_path_us)
 
 
-def add_pronunciation_button(buttons, editor: editor.Editor):
+def _add_1st_meaning(editor: editor.Editor) -> None:
+    '''Adds only the first meaning given by api.dictionaryapi.dev to the
+    editor "Back" box.'''
+    # Same as _add_all_meanings, just breaking the loop after the first definition.
+
+    word = _get_word_from_editor(editor)
+
+    # Gets the word from api.dictionaryapi.dev (than returns a list of length 1).
+    try:
+        api_json = requests.get(
+            "https://api.dictionaryapi.dev/api/v2/entries/en/" + word).json()[0]
+    except:
+        return
+
+    # _answer will be constructed and used to fill the "Back" box.
+    _answer: str = ''
+
+    try:
+        if settings.add_phonetics_with_1st_meaning:
+            _answer += (api_json["phonetic"] + '<br><br>')
+    except:
+        pass
+
+    # Loop to add all the meanings, plus formatting.
+    for meaning in api_json['meanings']:
+        try:
+            _answer += ('<b>' + meaning['partOfSpeech'] + '</b>' + '<br>')
+        except:
+            pass
+
+        for definition in meaning['definitions']:
+            try:
+                _answer += (definition['definition'] + '<br>')
+            except:
+                pass
+
+            try:
+                if definition['example']:
+                    _answer += ('<font color="grey">' + '"' +
+                                definition['example'] + '"' + '</font>' + '<br>')
+            except:
+                pass
+
+            try:
+                if definition['synonyms']:
+                    _answer += ('Similar: ' + '<font color="grey">' +
+                                ", ".join(definition['synonyms']) + '</font>' + '<br>')
+            except:
+                pass
+
+            try:
+                if definition['antonyms']:
+                    _answer += ('Opposite: ' + '<font color="grey">' +
+                                ", ".join(definition['antonyms']) + '</font>' + '<br>')
+            except:
+                pass
+
+            break
+        break
+
+    # Removes any of the line breaks added in the above loop at the beginning
+    # or end of _answer.
+    # Can be replaced by removesuffix and removeprefix in the later Anki versions
+    # for better readability.
+    while _answer[:4] == '<br>':
+        _answer = _answer[4:]
+
+    while _answer[-4:] == '<br>':
+        _answer = _answer[:-4]
+
+    # If overwrite is disabled, separates the new and old contents with a dashed line.
+    if settings.overwrite_meaning or not(editor.note.fields[1]):
+        editor.note.fields[1] = _answer
+    else:
+        editor.note.fields[1] += (
+            '<br><br>' + '-------------------------------------------' + '<br><br>' + _answer)
+
+    # For debugging
+    # aqt.utils.showText(str(editor.note.fields[1]))
+
+    # Applies the new content.
+    editor.loadNote()
+
+    return
+
+
+def _add_all_meanings(editor: editor.Editor) -> None:
+    '''Adds all meanings given by api.dictionaryapi.dev to the editor "Back" box.'''
+
+    word = _get_word_from_editor(editor)
+
+    # Gets the word from api.dictionaryapi.dev (than returns a list of length 1).
+    try:
+        api_json = requests.get(
+            "https://api.dictionaryapi.dev/api/v2/entries/en/" + word).json()[0]
+    except:
+        return
+
+    # _answer will be constructed and used to fill the "Back" box.
+    _answer: str = ''
+
+    try:
+        if settings.add_phonetics_with_1st_meaning:
+            _answer += (api_json["phonetic"] + '<br><br>')
+    except:
+        pass
+
+    # Loop to add all the meanings, plus formatting.
+    for meaning in api_json['meanings']:
+        try:
+            _answer += ('<b>' + meaning['partOfSpeech'] + '</b>' + '<br>')
+        except:
+            pass
+
+        for definition in meaning['definitions']:
+            try:
+                _answer += (definition['definition'] + '<br>')
+            except:
+                pass
+
+            try:
+                if definition['example']:
+                    _answer += ('<font color="grey">' + '"' +
+                                definition['example'] + '"' + '</font>' + '<br>')
+            except:
+                pass
+
+            try:
+                if definition['synonyms']:
+                    _answer += ('Similar: ' + '<font color="grey">' +
+                                ", ".join(definition['synonyms']) + '</font>' + '<br>')
+            except:
+                pass
+
+            try:
+                if definition['antonyms']:
+                    _answer += ('Opposite: ' + '<font color="grey">' +
+                                ", ".join(definition['antonyms']) + '</font>' + '<br>')
+            except:
+                pass
+
+            _answer += '<br>'
+        _answer += '<br>'
+
+    # Removes any of the line breaks added in the above loop at the beginning
+    # or end of _answer.
+    # Can be replaced by removesuffix and removeprefix in the later Anki versions
+    # for better readability.
+    while _answer[:4] == '<br>':
+        _answer = _answer[4:]
+
+    while _answer[-4:] == '<br>':
+        _answer = _answer[:-4]
+
+    # If overwrite is disabled, separates the new and old contents with a dashed line.
+    if settings.overwrite_meaning or not(editor.note.fields[1]):
+        editor.note.fields[1] = _answer
+    else:
+        editor.note.fields[1] += (
+            '<br><br>' + '-------------------------------------------' + '<br><br>' + _answer)
+
+    # For debugging
+    # aqt.utils.showText(str(editor.note.fields[1]))
+
+    # Applies the new content.
+    editor.loadNote()
+
+    return
+
+
+def add_buttons(buttons, editor: editor.Editor) -> List[str]:
     '''
-    Adds a new button to the editor.
-    By clicking this button, _add_pronunciation_mp3s is triggered
-    and pronunciations are added to the entry.
+    Adds three new buttons to the editor.
+    By clicking the respective button one of below happens:
+    1- _add_pronunciation_mp3s is triggered and pronunciations will be added to the entry.
+    2- _add_1st_meaning is triggered and only the first meaning will be added to the entry.
+    3- _add_all_meanings is triggered and all meanings will be added to the entry.
     '''
-    editor._links['click_button'] = _add_pronunciation_mp3s
-    return buttons + [editor._addButton(
-        icon=os.path.join(os.path.dirname(__file__), 'images',
-                          'sil.svg'),
-        cmd='click_button',
-        tip='Add Google Pronunciation')]
+    editor._links['click_pronunciation_button'] = _add_pronunciation_mp3s
+    editor._links['click_1st_meaning_button'] = _add_1st_meaning
+    editor._links['click_all_meanings_button'] = _add_all_meanings
+    _buttons = buttons
+
+    if settings.display_add_pronunciation_button:
+        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(__file__), 'images',
+                                       'sil.svg'), cmd='click_pronunciation_button', tip='Add Pronunciation')]
+    if settings.display_add_1st_meaning_button:
+        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
+            __file__), 'images', '1st.svg'), cmd='click_1st_meaning_button', tip='Add 1st Meaning')]
+    if settings.display_add_all_meanings_button:
+        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
+            __file__), 'images', 'all.svg'), cmd='click_all_meanings_button', tip='Add All Meanings')]
+
+    return _buttons
 
 
 def new_play_button_css(web_content: webview.WebContent, context: Any) -> None:
     '''
     Appends a css to modify the shape of an existing button
-    or define the shape of a new audio play buttons
+    or define the shape of a new audio play button
 
     In our case, only a text element is added to the
     Anki defined "replay-button svg" by "add_label_to_button.css" file.
@@ -190,7 +372,7 @@ def new_play_button_css(web_content: webview.WebContent, context: Any) -> None:
     # web_content.body += "<div id='my-addon'></div>"
 
 
-def add_button_labels(text: str, card: Card, kind: str) -> BeautifulSoup.prettify:
+def add_play_button_labels(text: str, card: Card, kind: str) -> BeautifulSoup.prettify:
     '''
     Adds US/GB labels to the respective pronunciation play buttons.
     This function is used by the card_will_show hook in the __init__.py

@@ -1,8 +1,17 @@
 {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36",
-    "Add US pronunciation?": "Yes",
-    "Add GB pronunciation?": "Yes",
-    "US or GB first?": "US",
-    "Keep duplicates?": "No",
-    "Add labels to play buttons?": "Yes"
+    "01-User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36",
+
+    "02-Display 'Add Pronunciation' button?": "Yes",
+    "03-Display 'Add 1st Meaning' button?": "Yes",
+    "04-Display 'Add All Meanings' button?": "Yes",
+
+    "05-Add US pronunciation?": "Yes",
+    "06-Add GB pronunciation?": "Yes",
+    "07-US or GB pronunciation first?": "US",
+    "08-Keep pronunciation duplicates?": "No",
+    "09-Add labels to play buttons?": "Yes",
+
+    "10-Add phonetics with the 1st meaning?": "Yes",
+    "11-Add phonetics with all meanings?": "Yes",
+    "12-Overwrite meaning?": "No"
 }
