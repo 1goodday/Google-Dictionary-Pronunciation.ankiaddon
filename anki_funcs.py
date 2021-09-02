@@ -335,7 +335,7 @@ def add_buttons(buttons, editor: editor.Editor) -> List[str]:
             __file__), 'images', '1st.svg'), cmd='click_1st_meaning_button', tip='Add 1st Meaning')]
     if settings.display_add_all_meanings_button:
         _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
-            __file__), 'images', 'all.svg'), cmd='click_all_meanings_button', tip='Add All Meanings')]
+            __file__), 'images', 'All.svg'), cmd='click_all_meanings_button', tip='Add All Meanings')]
 
     return _buttons
 
