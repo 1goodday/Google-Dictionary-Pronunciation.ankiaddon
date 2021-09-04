@@ -65,3 +65,5 @@ _iso_639_1_codes_dictreader = csv.DictReader(_iso_639_1_codes_file)
 iso_639_1_codes_dict: dict = {}
 for _row in _iso_639_1_codes_dictreader:
     iso_639_1_codes_dict[_row['ISO-639-1 Code']] = _row['Language']
+
+_iso_639_1_codes_file.close()
