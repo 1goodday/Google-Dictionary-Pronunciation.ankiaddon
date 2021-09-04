@@ -1,7 +1,6 @@
 # Functions interacting with Anki and its display.
 
 
-import os
 from . import settings, scrape
 from aqt import mw
 from anki.cards import Card
@@ -11,6 +10,14 @@ from bs4 import BeautifulSoup
 import aqt.utils
 from typing import Any, List
 from aqt import editor, webview
+import sys
+import os
+
+# Add external_libs directory to module search path
+parent_dir = os.path.abspath(os.path.dirname(__file__))
+external_libs_dir = os.path.join(parent_dir, 'external_libs')
+sys.path.append(external_libs_dir)
+from googletrans import Translator
 
 
 def _get_word_from_editor(editor: editor.Editor) -> str:
@@ -314,6 +321,54 @@ def _add_all_meanings(editor: editor.Editor) -> None:
     return
 
 
+def _add_translation(editor: editor.Editor) -> None:
+    '''Adds translation given by googletrans (https://pypi.org/project/googletrans/)
+    to the editor "Back" box.'''
+
+    word = _get_word_from_editor(editor)
+    # Initiating Translator
+    _translator = Translator(
+        user_agent=settings.mybrowser_headers['User-Agent'])
+
+    # Gets the translation
+    try:
+        _translated = _translator.translate(
+            word, src='en', dest=settings.translation_target_language)
+    except:
+        return
+
+    # _answer will be constructed and used to fill the "Back" box.
+    _answer: str = ''
+
+    try:
+        _answer += (settings.iso_639_1_codes_dict[settings.translation_target_language] +
+                    ' translation: ' + _translated.text)
+    except:
+        pass
+
+    try:
+        if settings.add_transliteration:
+            _answer += ('<font color="grey" >' + ' (' +
+                        _translated.pronunciation + ')' + '</font>')
+    except:
+        pass
+
+    # If overwrite is disabled, separates the new and old contents with a dashed line.
+    if settings.overwrite_translation or not(editor.note.fields[1]):
+        editor.note.fields[1] = _answer
+    else:
+        editor.note.fields[1] += (
+            '<br><br>' + '-------------------------------------------' + '<br><br>' + _answer)
+
+    # For debugging
+    # aqt.utils.showText(str(editor.note.fields[1]))
+
+    # Applies the new content.
+    editor.loadNote()
+
+    return
+
+
 def add_buttons(buttons, editor: editor.Editor) -> List[str]:
     '''
     Adds three new buttons to the editor.
@@ -321,10 +376,13 @@ def add_buttons(buttons, editor: editor.Editor) -> List[str]:
     1- _add_pronunciation_mp3s is triggered and pronunciations will be added to the entry.
     2- _add_1st_meaning is triggered and only the first meaning will be added to the entry.
     3- _add_all_meanings is triggered and all meanings will be added to the entry.
+    4- _add_translation is triggered and translation in the specified target language
+       will be added to the entry.
     '''
     editor._links['click_pronunciation_button'] = _add_pronunciation_mp3s
     editor._links['click_1st_meaning_button'] = _add_1st_meaning
     editor._links['click_all_meanings_button'] = _add_all_meanings
+    editor._links['click_translation_button'] = _add_translation
     _buttons = buttons
 
     if settings.display_add_pronunciation_button:
@@ -336,6 +394,9 @@ def add_buttons(buttons, editor: editor.Editor) -> List[str]:
     if settings.display_add_all_meanings_button:
         _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
             __file__), 'images', 'All.svg'), cmd='click_all_meanings_button', tip='Add All Meanings')]
+    if settings.display_add_translation_button:
+        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
+            __file__), 'images', 'T.svg'), cmd='click_translation_button', tip='Add Translation')]
 
     return _buttons
 

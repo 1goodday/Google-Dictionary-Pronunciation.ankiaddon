@@ -8,18 +8,26 @@
 
 * **04-Display 'Add All Meanings' button?**: "Yes" if you want to see the "Add All Meanings" button, "No" otherwise
 
-* **05-Add US pronunciation?**: "Yes" if you want to add US (American) pronunciation, "No" otherwise
+* **05-Display 'Add Translation' button?**: "Yes" if you want to see the "Add Translation" button, "No" otherwise
 
-* **06-Add GB pronunciation?**: "Yes" if you want to add GB (British) pronunciation, "No" otherwise
+* **06-Add US pronunciation?**: "Yes" if you want to add US (American) pronunciation, "No" otherwise
 
-* **07-US or GB pronunciation first?**: "GB" if you want the sequence of pronunciation files be 1-GB 2-US, "US" if vice versa
+* **07-Add GB pronunciation?**: "Yes" if you want to add GB (British) pronunciation, "No" otherwise
 
-* **08-Keep pronunciation duplicates?**: "No" if you do not want to add the pronunciation if it already exists, "Yes" otherwise
+* **08-US or GB pronunciation first?**: "GB" if you want the sequence of pronunciation files be 1-GB 2-US, "US" if vice versa
 
-* **09-Add labels to play buttons?**: "Yes" if you want US or GB labels appear on the respective media play buttons, "No" otherwise
+* **09-Keep pronunciation duplicates?**: "No" if you do not want to add the pronunciation if it already exists, "Yes" otherwise
 
-* **10-Add phonetics with the 1st meaning?**: "Yes" if you want the phonetics be added along with the 1st meaning, "No" otherwise
+* **10-Add labels to play buttons?**: "Yes" if you want US or GB labels appear on the respective media play buttons, "No" otherwise
 
-* **11-Add phonetics with all meanings?**: "Yes" if you want the phonetics be added along with all meanings, "No" otherwise
+* **11-Add phonetics with the 1st meaning?**: "Yes" if you want the phonetics be added along with the 1st meaning, "No" otherwise
 
-* **12-Overwrite meaning?**: "Yes" if you want the new meaning replace the previous contents of the "Back" box, "No" if you want the new meaning be added to the "Back" box current contents
+* **12-Add phonetics with all meanings?**: "Yes" if you want the phonetics be added along with all meanings, "No" otherwise
+
+* **13-Overwrite meaning?**: "Yes" if you want the new meaning replace the previous contents of the "Back" box, "No" if you want the new meaning be added to the "Back" box current contents
+
+* **14-Translation target language**: Choose a target language ISO-639-1 two-letter code. You can find the code in [Google documentation](https://cloud.google.com/translate/docs/languages) or [Wikipedia](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes). Source language is always English.
+
+* **15-Add transliteration to translation?**: "Yes" if you want the transliteration (in the target language) appear alongside the translation
+
+* **16-Overwrite translation?**: "Yes" if you want the translation replace the previous contents of the "Back" box, "No" if you want the translation be added to the "Back" box current contents

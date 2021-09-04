@@ -1,5 +1,5 @@
 # Anki Add-on Google Dictionary
-Anki Addon to add Google Dictionary results (American and/or British English accents + meanings) to vocabulary entries  
+Anki Addon to add Google Dictionary results (American and/or British English accents + meanings + translation) to vocabulary entries  
 
 If you enjoy the add-on, you can:  
 
@@ -13,13 +13,18 @@ Refer to [Add-on link on Anki website](https://ankiweb.net/shared/info/134663584
 
 ## Version History
 * 1.0.0
-    * Initial release (Supports pronunciation addition)
+    * Initial release (pronunciation addition capability)
 * 2.0.0
-    * Supports meaning addition
+    * Meaning addition capability added
+* 3.0.0
+    * Translation addition capability added
 
 ## Acknowledgments
 ##### Meaning addition made possible by:
 [Free Dictionary API](dictionaryapi.dev)
+
+##### Translation addition made possible by:
+[googletrans](https://pypi.org/project/googletrans/)
 
 ##### Helped me in the development:
 [AutoDefine - Automatically define vocabulary words with pronunciations and image](https://ankiweb.net/shared/info/2136497008)  

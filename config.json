@@ -4,14 +4,19 @@
     "02-Display 'Add Pronunciation' button?": "Yes",
     "03-Display 'Add 1st Meaning' button?": "Yes",
     "04-Display 'Add All Meanings' button?": "Yes",
+    "05-Display 'Add Translation' button?": "Yes",
 
-    "05-Add US pronunciation?": "Yes",
-    "06-Add GB pronunciation?": "Yes",
-    "07-US or GB pronunciation first?": "US",
-    "08-Keep pronunciation duplicates?": "No",
-    "09-Add labels to play buttons?": "Yes",
+    "06-Add US pronunciation?": "Yes",
+    "07-Add GB pronunciation?": "Yes",
+    "08-US or GB pronunciation first?": "US",
+    "09-Keep pronunciation duplicates?": "No",
+    "10-Add labels to play buttons?": "Yes",
 
-    "10-Add phonetics with the 1st meaning?": "Yes",
-    "11-Add phonetics with all meanings?": "Yes",
-    "12-Overwrite meaning?": "No"
+    "11-Add phonetics with the 1st meaning?": "Yes",
+    "12-Add phonetics with all meanings?": "Yes",
+    "13-Overwrite meaning?": "No",
+
+    "14-Translation target language": "fr",
+    "15-Add transliteration to translation?": "Yes",
+    "16-Overwrite translation?": "No"
 }
