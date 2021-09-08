@@ -11,7 +11,7 @@ If you enjoy the add-on, you can:
 ## Installation and Usage
 Refer to [Add-on link on Anki website](https://ankiweb.net/shared/info/1346635841).
 
-## Version History
+## Main Version History
 * 1.0.0
     * Initial release (pronunciation addition capability)
 * 2.0.0

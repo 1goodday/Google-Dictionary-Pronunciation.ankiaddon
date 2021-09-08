@@ -23,7 +23,8 @@ def _scrape(url: str, word: str) -> List[Tuple[str, str]]:
         A list of (url, filename) tuple(s) sorted in ascending
         order of the length of the urls.
     '''
-    _html = requests.get(url, headers=settings.mybrowser_headers)
+    _html = requests.get(
+        url, headers=settings.config_values().mybrowser_headers)
 
     # Some "hyphenated compound words" like "add-on" appear with underscore
     # in the mp3 filename and mp3 url, but should be searched with hyphen.

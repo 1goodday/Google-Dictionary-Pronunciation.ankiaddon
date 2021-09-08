@@ -5,40 +5,43 @@ from aqt import mw
 import csv
 import os
 
+
 # Redaing the user settings in config.json
-config = mw.addonManager.getConfig(__name__)
-mybrowser_headers = {
-    'User-Agent': config['01-User-Agent']}
-add_US_pronunciation = (
-    config['06-Add US pronunciation?'][0].lower() == 'y')
-add_GB_pronunciation = (
-    config['07-Add GB pronunciation?'][0].lower() == 'y')
-US_pronunciation_first = (
-    config['08-US or GB pronunciation first?'][0].lower() == 'u')
-keep_pronunciation_duplicates = (
-    config['09-Keep pronunciation duplicates?'][0].lower() == 'y')
-add_play_button_labels = (
-    config['10-Add labels to play buttons?'][0].lower() == 'y')
-display_add_pronunciation_button = (
-    config['02-Display \'Add Pronunciation\' button?'][0].lower() == 'y')
-display_add_1st_meaning_button = (
-    config['03-Display \'Add 1st Meaning\' button?'][0].lower() == 'y')
-display_add_all_meanings_button = (
-    config['04-Display \'Add All Meanings\' button?'][0].lower() == 'y')
-display_add_translation_button = (
-    config['05-Display \'Add Translation\' button?'][0].lower() == 'y')
-add_phonetics_with_1st_meaning = (
-    config['11-Add phonetics with the 1st meaning?'][0].lower() == 'y')
-add_phonetics_with_all_meanings = (
-    config['12-Add phonetics with all meanings?'][0].lower() == 'y')
-overwrite_meaning = (
-    config['13-Overwrite meaning?'][0].lower() == 'y')
-translation_target_language = (
-    config['14-Translation target language'].lower())
-add_transliteration = (
-    config['15-Add transliteration to translation?'][0].lower() == 'y')
-overwrite_translation = (
-    config['16-Overwrite translation?'][0].lower() == 'y')
+class config_values:
+    def __init__(self):
+        config = mw.addonManager.getConfig(__name__)
+        self.mybrowser_headers = {
+            'User-Agent': config['01-User-Agent']}
+        self.add_US_pronunciation = (
+            config['06-Add US pronunciation?'][0].lower() == 'y')
+        self.add_GB_pronunciation = (
+            config['07-Add GB pronunciation?'][0].lower() == 'y')
+        self.US_pronunciation_first = (
+            config['08-US or GB pronunciation first?'][0].lower() == 'u')
+        self.keep_pronunciation_duplicates = (
+            config['09-Keep pronunciation duplicates?'][0].lower() == 'y')
+        self.add_play_button_labels = (
+            config['10-Add labels to play buttons?'][0].lower() == 'y')
+        self.display_add_pronunciation_button = (
+            config['02-Display \'Add Pronunciation\' button?'][0].lower() == 'y')
+        self.display_add_1st_meaning_button = (
+            config['03-Display \'Add 1st Meaning\' button?'][0].lower() == 'y')
+        self.display_add_all_meanings_button = (
+            config['04-Display \'Add All Meanings\' button?'][0].lower() == 'y')
+        self.display_add_translation_button = (
+            config['05-Display \'Add Translation\' button?'][0].lower() == 'y')
+        self.add_phonetics_with_1st_meaning = (
+            config['11-Add phonetics with the 1st meaning?'][0].lower() == 'y')
+        self.add_phonetics_with_all_meanings = (
+            config['12-Add phonetics with all meanings?'][0].lower() == 'y')
+        self.overwrite_meaning = (
+            config['13-Overwrite meaning?'][0].lower() == 'y')
+        self.translation_target_language = (
+            config['14-Translation target language'].lower())
+        self.add_transliteration = (
+            config['15-Add transliteration to translation?'][0].lower() == 'y')
+        self.overwrite_translation = (
+            config['16-Overwrite translation?'][0].lower() == 'y')
 
 
 class patterns:

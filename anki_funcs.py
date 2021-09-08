@@ -127,12 +127,12 @@ def _add_pronunciation_mp3s(editor: editor.Editor) -> None:
 
     # 5
     try_adding_GB_pronunciation = try_adding_US_pronunciation = False
-    if settings.add_GB_pronunciation and (not(GB_pronunciation_exists) or settings.keep_pronunciation_duplicates):
+    if settings.config_values().add_GB_pronunciation and (not(GB_pronunciation_exists) or settings.config_values().keep_pronunciation_duplicates):
         try_adding_GB_pronunciation = True
-    if settings.add_US_pronunciation and (not(US_pronunciation_exists) or settings.keep_pronunciation_duplicates):
+    if settings.config_values().add_US_pronunciation and (not(US_pronunciation_exists) or settings.config_values().keep_pronunciation_duplicates):
         try_adding_US_pronunciation = True
 
-    if settings.US_pronunciation_first:
+    if settings.config_values().US_pronunciation_first:
         if (requests.get(mp3_url_us).status_code == 200) and try_adding_US_pronunciation:
             file_path_us = editor.urlToFile(mp3_url_us)
             editor.addMedia(file_path_us)
@@ -169,7 +169,7 @@ def _add_1st_meaning(editor: editor.Editor) -> None:
     _answer: str = ''
 
     try:
-        if settings.add_phonetics_with_1st_meaning:
+        if settings.config_values().add_phonetics_with_1st_meaning:
             _answer += (api_json["phonetic"] + '<br><br>')
     except:
         pass
@@ -222,7 +222,7 @@ def _add_1st_meaning(editor: editor.Editor) -> None:
         _answer = _answer[:-4]
 
     # If overwrite is disabled, separates the new and old contents with a dashed line.
-    if settings.overwrite_meaning or not(editor.note.fields[1]):
+    if settings.config_values().overwrite_meaning or not(editor.note.fields[1]):
         editor.note.fields[1] = _answer
     else:
         editor.note.fields[1] += (
@@ -253,7 +253,7 @@ def _add_all_meanings(editor: editor.Editor) -> None:
     _answer: str = ''
 
     try:
-        if settings.add_phonetics_with_1st_meaning:
+        if settings.config_values().add_phonetics_with_1st_meaning:
             _answer += (api_json["phonetic"] + '<br><br>')
     except:
         pass
@@ -306,7 +306,7 @@ def _add_all_meanings(editor: editor.Editor) -> None:
         _answer = _answer[:-4]
 
     # If overwrite is disabled, separates the new and old contents with a dashed line.
-    if settings.overwrite_meaning or not(editor.note.fields[1]):
+    if settings.config_values().overwrite_meaning or not(editor.note.fields[1]):
         editor.note.fields[1] = _answer
     else:
         editor.note.fields[1] += (
@@ -328,12 +328,12 @@ def _add_translation(editor: editor.Editor) -> None:
     word = _get_word_from_editor(editor)
     # Initiating Translator
     _translator = Translator(
-        user_agent=settings.mybrowser_headers['User-Agent'])
+        user_agent=settings.config_values().mybrowser_headers['User-Agent'])
 
     # Gets the translation
     try:
         _translated = _translator.translate(
-            word, src='en', dest=settings.translation_target_language)
+            word, src='en', dest=settings.config_values().translation_target_language)
     except:
         return
 
@@ -341,20 +341,20 @@ def _add_translation(editor: editor.Editor) -> None:
     _answer: str = ''
 
     try:
-        _answer += (settings.iso_639_1_codes_dict[settings.translation_target_language] +
+        _answer += (settings.iso_639_1_codes_dict[settings.config_values().translation_target_language] +
                     ' translation: ' + _translated.text)
     except:
         pass
 
     try:
-        if settings.add_transliteration:
+        if settings.config_values().add_transliteration:
             _answer += ('<font color="grey" >' + ' (' +
                         _translated.pronunciation + ')' + '</font>')
     except:
         pass
 
     # If overwrite is disabled, separates the new and old contents with a dashed line.
-    if settings.overwrite_translation or not(editor.note.fields[1]):
+    if settings.config_values().overwrite_translation or not(editor.note.fields[1]):
         editor.note.fields[1] = _answer
     else:
         editor.note.fields[1] += (
@@ -385,16 +385,16 @@ def add_buttons(buttons, editor: editor.Editor) -> List[str]:
     editor._links['click_translation_button'] = _add_translation
     _buttons = buttons
 
-    if settings.display_add_pronunciation_button:
+    if settings.config_values().display_add_pronunciation_button:
         _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(__file__), 'images',
                                        'sil.svg'), cmd='click_pronunciation_button', tip='Add Pronunciation')]
-    if settings.display_add_1st_meaning_button:
+    if settings.config_values().display_add_1st_meaning_button:
         _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
             __file__), 'images', '1st.svg'), cmd='click_1st_meaning_button', tip='Add 1st Meaning')]
-    if settings.display_add_all_meanings_button:
+    if settings.config_values().display_add_all_meanings_button:
         _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
             __file__), 'images', 'All.svg'), cmd='click_all_meanings_button', tip='Add All Meanings')]
-    if settings.display_add_translation_button:
+    if settings.config_values().display_add_translation_button:
         _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
             __file__), 'images', 'T.svg'), cmd='click_translation_button', tip='Add Translation')]
 
@@ -409,6 +409,9 @@ def new_play_button_css(web_content: webview.WebContent, context: Any) -> None:
     In our case, only a text element is added to the
     Anki defined "replay-button svg" by "add_label_to_button.css" file.
     '''
+
+    if not(settings.config_values().add_play_button_labels):
+        return
 
     # Below codes/explanations belong to Anki "webview_will_set_content" hook in genhooks_gui.py
     # that are kept for possible future use.
@@ -450,6 +453,9 @@ def add_play_button_labels(text: str, card: Card, kind: str) -> BeautifulSoup.pr
     The original or modified text (html input), decided based on kind value
     and audio/video filenames in the card.
     '''
+
+    if not(settings.config_values().add_play_button_labels):
+        return
 
     # Function works in below steps:
     # 1- Checks the kind, it should be in either reviewer or previewer
