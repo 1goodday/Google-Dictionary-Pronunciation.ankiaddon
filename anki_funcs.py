@@ -1,14 +1,15 @@
 # Functions interacting with Anki and its display.
 
 
+# from anki._backend.backend_pb2 import Bool
 from . import settings, scrape
-from aqt import mw
+from aqt import gui_hooks, mw
 from anki.cards import Card
 import re
 import requests
 from bs4 import BeautifulSoup
 import aqt.utils
-from typing import Any, List
+from typing import Any, List, Dict, Tuple
 from aqt import editor, webview
 import sys
 import os
@@ -41,18 +42,23 @@ def _get_word_from_editor(editor: editor.Editor) -> str:
 
 
 def _get_av_filenames_from_editor(editor: editor.Editor) -> List[str]:
-    '''Extracts and cleans the audio/video filenames from editor.'''
-    _field0 = str(editor.note.fields[0]).replace('&nbsp;', ' ')
-    _word_and_av_filenames = re.split('[\[\]]|sound:', _field0)
+    '''Extracts and cleans the audio filenames from editor.'''
+    _pronunciation_field_contents = str(
+        editor.note.fields[settings.config_values().pronunciation_field]).replace('&nbsp;', ' ')
+    _word_and_av_filenames = re.split(
+        '[\[\]]|sound:', _pronunciation_field_contents)
 
     # Removing blank list items
     _word_and_av_filenames = list(filter(None, _word_and_av_filenames))
 
-    av_filenames = _word_and_av_filenames[1:]
+    av_filenames: List[str] = []
+    for _word_and_av_filename in _word_and_av_filenames:
+        if re.match('.*\.mp3', _word_and_av_filename):
+            av_filenames.append(_word_and_av_filename)
 
     # For debugging
-    # aqt.utils.showText("editor.note.fields[0]:\n" + editor.note.fields[0] + "\n\n_field0:\n" +
-    #                    _field0 + "\n\n_word_and_av_filenames:\n" + str(_word_and_av_filenames) + "\n\nav_filenames:\n" + str(av_filenames))
+    # aqt.utils.showText("editor.note.fields[settings.config_values().pronunciation_field]:\n" + editor.note.fields[settings.config_values().pronunciation_field] + "\n\n_field0:\n" +
+    #                    _pronunciation_field_contents + "\n\n_word_and_av_filenames:\n" + str(_word_and_av_filenames) + "\n\nav_filenames:\n" + str(av_filenames))
 
     return av_filenames
 
@@ -135,26 +141,36 @@ def _add_pronunciation_mp3s(editor: editor.Editor) -> None:
     if settings.config_values().US_pronunciation_first:
         if (requests.get(mp3_url_us).status_code == 200) and try_adding_US_pronunciation:
             file_path_us = editor.urlToFile(mp3_url_us)
-            editor.addMedia(file_path_us)
+            editor.note.fields[settings.config_values(
+            ).pronunciation_field] += editor._addMedia(file_path_us)
 
         if (requests.get(mp3_url_gb).status_code == 200) and try_adding_GB_pronunciation:
             file_path_gb = editor.urlToFile(mp3_url_gb)
-            editor.addMedia(file_path_gb)
+            editor.note.fields[settings.config_values(
+            ).pronunciation_field] += editor._addMedia(file_path_gb)
 
     else:
         if (requests.get(mp3_url_gb).status_code == 200) and try_adding_GB_pronunciation:
             file_path_gb = editor.urlToFile(mp3_url_gb)
-            editor.addMedia(file_path_gb)
+            editor.note.fields[settings.config_values(
+            ).pronunciation_field] += editor._addMedia(file_path_gb)
 
         if (requests.get(mp3_url_us).status_code == 200) and try_adding_US_pronunciation:
             file_path_us = editor.urlToFile(mp3_url_us)
-            editor.addMedia(file_path_us)
+            editor.note.fields[settings.config_values(
+            ).pronunciation_field] += editor._addMedia(file_path_us)
+
+    # Applies the new content.
+    editor.loadNote()
 
 
-def _add_1st_meaning(editor: editor.Editor) -> None:
-    '''Adds only the first meaning given by api.dictionaryapi.dev to the
-    editor "Back" box.'''
-    # Same as _add_all_meanings, just breaking the loop after the first definition.
+# def _write_into_field(text: str, field_number: int, overwrite: bool, separator: str):
+
+
+def _add_1st_definition(editor: editor.Editor) -> None:
+    '''Adds only the first definition elements given by api.dictionaryapi.dev to the
+    specified field(s) in the config file.'''
+    # Same as _add_all_definitions, just breaking the loop after the first definition.
 
     word = _get_word_from_editor(editor)
 
@@ -166,67 +182,133 @@ def _add_1st_meaning(editor: editor.Editor) -> None:
         return
 
     # _answer will be constructed and used to fill the "Back" box.
-    _answer: str = ''
+    _defsectname_defsectvalue: Dict[str, str] = {}
+    _defsectname_fieldnum: Dict[str, int] = {}
 
     try:
-        if settings.config_values().add_phonetics_with_1st_meaning:
-            _answer += (api_json["phonetic"] + '<br><br>')
+        if settings.config_values().first_definition_phonetic_field:
+            if settings.config_values().first_definition_phonetic_title:
+                _defsectname_defsectvalue['phonetic'] = f'<font color={settings.config_values().titles_color}>{settings.config_values().first_definition_phonetic_title}</font>'
+            else:
+                _defsectname_defsectvalue['phonetic'] = ''
+
+            _defsectname_defsectvalue['phonetic'] += f"<font color={settings.config_values().first_definition_phonetic_color}>{api_json['phonetic']}<br><br>"
+            _defsectname_fieldnum['phonetic'] = settings.config_values(
+            ).first_definition_phonetic_field
     except:
         pass
 
     # Loop to add all the meanings, plus formatting.
     for meaning in api_json['meanings']:
         try:
-            _answer += ('<b>' + meaning['partOfSpeech'] + '</b>' + '<br>')
+            if settings.config_values().first_definitions_pos_title:
+                _defsectname_defsectvalue['partOfSpeech'] = f'<font color={settings.config_values().titles_color}>{settings.config_values().first_definitions_pos_title}</font>'
+            else:
+                _defsectname_defsectvalue['partOfSpeech'] = ''
+
+            _defsectname_defsectvalue['partOfSpeech'] += f"<b><font color={settings.config_values().first_definitions_pos_color}>{meaning['partOfSpeech']}</font></b><br>"
+            _defsectname_fieldnum['partOfSpeech'] = settings.config_values(
+            ).first_definitions_pos_field
         except:
             pass
 
         for definition in meaning['definitions']:
             try:
-                _answer += (definition['definition'] + '<br>')
+                if settings.config_values().first_definition_definition_title:
+                    _defsectname_defsectvalue['definition'] = f'<font color={settings.config_values().titles_color}>{settings.config_values().first_definition_definition_title}</font>'
+                else:
+                    _defsectname_defsectvalue['definition'] = ''
+
+                _defsectname_defsectvalue['definition'] += f"<font color={settings.config_values().first_definition_definition_color}>{definition['definition']}</font><br>"
+                _defsectname_fieldnum['definition'] = settings.config_values(
+                ).first_definition_definition_field
             except:
                 pass
 
             try:
                 if definition['example']:
-                    _answer += ('<font color="grey">' + '"' +
-                                definition['example'] + '"' + '</font>' + '<br>')
+                    if settings.config_values().first_definition_example_title:
+                        _defsectname_defsectvalue[
+                            'example'] = f'<font color={settings.config_values().titles_color}>{settings.config_values().first_definition_example_title}</font>'
+                    else:
+                        _defsectname_defsectvalue['example'] = ''
+
+                    _defsectname_defsectvalue[
+                        'example'] += f"<font color={settings.config_values().first_definition_example_color}>{definition['example']}</font><br>"
+                    _defsectname_fieldnum['example'] = settings.config_values(
+                    ).first_definition_example_field
             except:
                 pass
 
             try:
                 if definition['synonyms']:
-                    _answer += ('Similar: ' + '<font color="grey">' +
-                                ", ".join(definition['synonyms']) + '</font>' + '<br>')
+                    if settings.config_values().first_definition_synonyms_title:
+                        _defsectname_defsectvalue[
+                            'synonyms'] = f'<font color={settings.config_values().titles_color}>{settings.config_values().first_definition_synonyms_title}</font>'
+                    else:
+                        _defsectname_defsectvalue['synonyms'] = ''
+
+                    _defsectname_defsectvalue['synonyms'] += f"<font color={settings.config_values().first_definition_synonyms_color}>{settings.config_values().synonyms_and_antonyms_separator.join(definition['synonyms'])}</font><br>"
+                    _defsectname_fieldnum['synonyms'] = settings.config_values(
+                    ).first_definition_synonyms_field
             except:
                 pass
 
             try:
                 if definition['antonyms']:
-                    _answer += ('Opposite: ' + '<font color="grey">' +
-                                ", ".join(definition['antonyms']) + '</font>' + '<br>')
+                    if settings.config_values().first_definition_antonyms_title:
+                        _defsectname_defsectvalue[
+                            'antonyms'] = f'<font color={settings.config_values().titles_color}>{settings.config_values().first_definition_antonyms_title}</font>'
+                    else:
+                        _defsectname_defsectvalue['antonyms'] = ''
+
+                    _defsectname_defsectvalue['antonyms'] += f"<font color={settings.config_values().first_definition_antonyms_color}>{settings.config_values().synonyms_and_antonyms_separator.join(definition['antonyms'])}</font><br>"
+                    _defsectname_fieldnum['antonyms'] = settings.config_values(
+                    ).first_definition_antonyms_field
             except:
                 pass
 
             break
         break
 
+    _separator = f'<font color={settings.config_values().not_overwrite_separator_color}>{settings.config_values().not_overwrite_separator}</font>'
+
+    # For debugging
+    # aqt.utils.showText(str(_defsectname_defsectvalue))
+    # aqt.utils.showText(str(_defsectname_fieldnum))
+
+    _editor_note_fields_temp: Dict[int, str] = {}
+
+    for _fieldnum in _defsectname_fieldnum.values():
+        _editor_note_fields_temp[_fieldnum] = ''
+
+    for _defsectname, _fieldnum in _defsectname_fieldnum.items():
+        _editor_note_fields_temp[_fieldnum] += _defsectname_defsectvalue[_defsectname]
+
+    # Removes duplicates from _defsectname_fieldnum.values()
+    _fieldnums = list(dict.fromkeys(list(_defsectname_fieldnum.values())))
+
+    for _fieldnum in _fieldnums:
+        if not(settings.config_values().overwrite_1st_definition) and editor.note.fields[_fieldnum]:
+            _editor_note_fields_temp[_fieldnum] = editor.note.fields[_fieldnum] + \
+                _separator + _editor_note_fields_temp[_fieldnum]
+
+    # For debugging
+    # aqt.utils.showText(str(_editor_note_fields_temp))
+
     # Removes any of the line breaks added in the above loop at the beginning
     # or end of _answer.
     # Can be replaced by removesuffix and removeprefix in the later Anki versions
     # for better readability.
-    while _answer[:4] == '<br>':
-        _answer = _answer[4:]
+    for _fieldnum in _editor_note_fields_temp.keys():
+        while _editor_note_fields_temp[_fieldnum][:4] == '<br>':
+            _editor_note_fields_temp[_fieldnum] = _editor_note_fields_temp[_fieldnum][4:]
 
-    while _answer[-4:] == '<br>':
-        _answer = _answer[:-4]
+        while _editor_note_fields_temp[_fieldnum][-4:] == '<br>':
+            _editor_note_fields_temp[_fieldnum] = _editor_note_fields_temp[_fieldnum][:-4]
 
-    # If overwrite is disabled, separates the new and old contents with a dashed line.
-    if settings.config_values().overwrite_meaning or not(editor.note.fields[1]):
-        editor.note.fields[1] = _answer
-    else:
-        editor.note.fields[1] += (
-            '<br><br>' + '-------------------------------------------' + '<br><br>' + _answer)
+        if _fieldnum != -1:
+            editor.note.fields[_fieldnum] = _editor_note_fields_temp[_fieldnum]
 
     # For debugging
     # aqt.utils.showText(str(editor.note.fields[1]))
@@ -237,8 +319,9 @@ def _add_1st_meaning(editor: editor.Editor) -> None:
     return
 
 
-def _add_all_meanings(editor: editor.Editor) -> None:
-    '''Adds all meanings given by api.dictionaryapi.dev to the editor "Back" box.'''
+def _add_all_definitions(editor: editor.Editor) -> None:
+    '''Adds all meanings given by api.dictionaryapi.dev to the specified field in
+    the config file.'''
 
     word = _get_word_from_editor(editor)
 
@@ -253,44 +336,60 @@ def _add_all_meanings(editor: editor.Editor) -> None:
     _answer: str = ''
 
     try:
-        if settings.config_values().add_phonetics_with_1st_meaning:
-            _answer += (api_json["phonetic"] + '<br><br>')
+        if settings.config_values().all_definitions_phonetic_field != -1:
+            if settings.config_values().all_definitions_phonetic_title:
+                _answer += f'<font color={settings.config_values().titles_color}>{settings.config_values().all_definitions_phonetic_title}</font>'
+            _answer += f'<font color={settings.config_values().all_definitions_phonetic_color}>{api_json["phonetic"]}</font>' + '<br><br>'
     except:
         pass
 
     # Loop to add all the meanings, plus formatting.
     for meaning in api_json['meanings']:
         try:
-            _answer += ('<b>' + meaning['partOfSpeech'] + '</b>' + '<br>')
+            if settings.config_values().all_definitions_pos_field != -1:
+                if settings.config_values().all_definitions_pos_title:
+                    _answer += f'<font color={settings.config_values().titles_color}>{settings.config_values().all_definitions_pos_title}</font>'
+                _answer += f"<font color={settings.config_values().all_definitions_pos_color}><b>{meaning['partOfSpeech']}</b><br></font>"
         except:
             pass
 
         for definition in meaning['definitions']:
-            try:
-                _answer += (definition['definition'] + '<br>')
-            except:
-                pass
+            if settings.config_values().all_definitions_definition_field != -1:
+                if settings.config_values().all_definitions_definition_title:
+                    _answer += f'<font color={settings.config_values().titles_color}>{settings.config_values().all_definitions_definition_title}</font>'
+                try:
+                    _answer += (
+                        f"<font color={settings.config_values().all_definitions_definition_color}>{definition['definition']}</font>" + '<br>')
+                except:
+                    pass
 
-            try:
-                if definition['example']:
-                    _answer += ('<font color="grey">' + '"' +
-                                definition['example'] + '"' + '</font>' + '<br>')
-            except:
-                pass
+            if settings.config_values().all_definitions_example_field != -1:
+                try:
+                    if definition['example']:
+                        if settings.config_values().all_definitions_example_title:
+                            _answer += f'<font color={settings.config_values().titles_color}>{settings.config_values().all_definitions_example_title}</font>'
+                        _answer += (f'<font color={settings.config_values().all_definitions_example_color}>' + '"' +
+                                    definition['example'] + '"' + '</font>' + '<br>')
+                except:
+                    pass
 
-            try:
-                if definition['synonyms']:
-                    _answer += ('Similar: ' + '<font color="grey">' +
-                                ", ".join(definition['synonyms']) + '</font>' + '<br>')
-            except:
-                pass
+            if settings.config_values().all_definitions_synonyms_field != -1:
+                try:
+                    if definition['synonyms']:
+                        if settings.config_values().all_definitions_synonyms_title:
+                            _answer += f'<font color={settings.config_values().titles_color}>{settings.config_values().all_definitions_synonyms_title}</font>'
+                        _answer += f"<font color={settings.config_values().all_definitions_synonyms_color}>{settings.config_values().synonyms_and_antonyms_separator.join(definition['synonyms'])}</font><br>"
+                except:
+                    pass
 
-            try:
-                if definition['antonyms']:
-                    _answer += ('Opposite: ' + '<font color="grey">' +
-                                ", ".join(definition['antonyms']) + '</font>' + '<br>')
-            except:
-                pass
+            if settings.config_values().all_definitions_antonyms_field != -1:
+                try:
+                    if definition['antonyms']:
+                        if settings.config_values().all_definitions_antonyms_title:
+                            _answer += f'<font color={settings.config_values().titles_color}>{settings.config_values().all_definitions_antonyms_title}</font>'
+                        _answer += f"<font color={settings.config_values().all_definitions_antonyms_color}>{settings.config_values().synonyms_and_antonyms_separator.join(definition['antonyms'])}</font><br>"
+                except:
+                    pass
 
             _answer += '<br>'
         _answer += '<br>'
@@ -305,12 +404,17 @@ def _add_all_meanings(editor: editor.Editor) -> None:
     while _answer[-4:] == '<br>':
         _answer = _answer[:-4]
 
-    # If overwrite is disabled, separates the new and old contents with a dashed line.
-    if settings.config_values().overwrite_meaning or not(editor.note.fields[1]):
-        editor.note.fields[1] = _answer
+    # For debugging
+    # aqt.utils.showText(str(editor.note.fields[settings.config_values().all_definitions_field]))
+
+    # If overwrite is disabled, separates the new and old contents with the specified separator
+    # in the config file.
+    if settings.config_values().overwrite_all_definitions or not(editor.note.fields[settings.config_values().all_definitions_field]):
+        editor.note.fields[settings.config_values(
+        ).all_definitions_field] = _answer
     else:
-        editor.note.fields[1] += (
-            '<br><br>' + '-------------------------------------------' + '<br><br>' + _answer)
+        editor.note.fields[settings.config_values().all_definitions_field] += (
+            f'<font color={settings.config_values().not_overwrite_separator_color}>{settings.config_values().not_overwrite_separator}</font>' + _answer)
 
     # For debugging
     # aqt.utils.showText(str(editor.note.fields[1]))
@@ -324,6 +428,9 @@ def _add_all_meanings(editor: editor.Editor) -> None:
 def _add_translation(editor: editor.Editor) -> None:
     '''Adds translation given by googletrans (https://pypi.org/project/googletrans/)
     to the editor "Back" box.'''
+
+    if not(settings.config_values().translation_field):
+        return
 
     word = _get_word_from_editor(editor)
     # Initiating Translator
@@ -340,25 +447,43 @@ def _add_translation(editor: editor.Editor) -> None:
     # _answer will be constructed and used to fill the "Back" box.
     _answer: str = ''
 
+    if settings.config_values().add_language_name:
+        try:
+            _answer += settings.iso_639_1_codes_dict[settings.config_values(
+            ).translation_target_language]
+        except:
+            pass
+
+    if settings.config_values().translation_title:
+        _answer = (f'<font color="{settings.config_values().titles_color}">' +
+                   _answer + settings.config_values().translation_title + '</font>')
+
+    else:
+        _answer = ''
+
     try:
-        _answer += (settings.iso_639_1_codes_dict[settings.config_values().translation_target_language] +
-                    ' translation: ' + _translated.text)
+        _answer += (f'<font color="{settings.config_values().translation_color}">' +
+                    _translated.text + '</font>')
     except:
         pass
 
     try:
         if settings.config_values().add_transliteration:
-            _answer += ('<font color="grey" >' + ' (' +
+            _answer += (f'<font color="{settings.config_values().transliteration_color}">' + ' (' +
                         _translated.pronunciation + ')' + '</font>')
     except:
         pass
 
-    # If overwrite is disabled, separates the new and old contents with a dashed line.
-    if settings.config_values().overwrite_translation or not(editor.note.fields[1]):
-        editor.note.fields[1] = _answer
+    # If overwrite is disabled, separates the new and old contents with the specified separator
+    # in the config file.
+    _separator = f'<font color={settings.config_values().not_overwrite_separator_color}>{settings.config_values().not_overwrite_separator}</font>'
+
+    if settings.config_values().overwrite_translation or not(editor.note.fields[settings.config_values().translation_field]):
+        editor.note.fields[settings.config_values(
+        ).translation_field] = _answer
     else:
-        editor.note.fields[1] += (
-            '<br><br>' + '-------------------------------------------' + '<br><br>' + _answer)
+        editor.note.fields[settings.config_values().translation_field] += (
+            _separator + _answer)
 
     # For debugging
     # aqt.utils.showText(str(editor.note.fields[1]))
@@ -371,34 +496,37 @@ def _add_translation(editor: editor.Editor) -> None:
 
 def add_buttons(buttons, editor: editor.Editor) -> List[str]:
     '''
-    Adds three new buttons to the editor.
+    Adds four new buttons to the editor.
     By clicking the respective button one of below happens:
     1- _add_pronunciation_mp3s is triggered and pronunciations will be added to the entry.
-    2- _add_1st_meaning is triggered and only the first meaning will be added to the entry.
-    3- _add_all_meanings is triggered and all meanings will be added to the entry.
+    2- _add_1st_definition is triggered and only the first meaning will be added to the entry.
+    3- _add_all_definitions is triggered and all meanings will be added to the entry.
     4- _add_translation is triggered and translation in the specified target language
        will be added to the entry.
     '''
-    editor._links['click_pronunciation_button'] = _add_pronunciation_mp3s
-    editor._links['click_1st_meaning_button'] = _add_1st_meaning
-    editor._links['click_all_meanings_button'] = _add_all_meanings
-    editor._links['click_translation_button'] = _add_translation
+
     _buttons = buttons
 
-    if settings.config_values().display_add_pronunciation_button:
-        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(__file__), 'images',
-                                       'sil.svg'), cmd='click_pronunciation_button', tip='Add Pronunciation')]
-    if settings.config_values().display_add_1st_meaning_button:
-        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
-            __file__), 'images', '1st.svg'), cmd='click_1st_meaning_button', tip='Add 1st Meaning')]
-    if settings.config_values().display_add_all_meanings_button:
-        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
-            __file__), 'images', 'All.svg'), cmd='click_all_meanings_button', tip='Add All Meanings')]
-    if settings.config_values().display_add_translation_button:
-        _buttons += [editor._addButton(icon=os.path.join(os.path.dirname(
-            __file__), 'images', 'T.svg'), cmd='click_translation_button', tip='Add Translation')]
+    if settings.config_values().display_pronunciation_button:
+        _buttons += [editor.addButton(icon=os.path.join(os.path.dirname(__file__), 'images',
+                                                        'sil.svg'), func=_add_pronunciation_mp3s, cmd='click_pronunciation_button', tip='Add Pronunciation\n(Alt+P)', keys='Alt+P')]
+    if settings.config_values().display_1st_definition_button:
+        _buttons += [editor.addButton(icon=os.path.join(os.path.dirname(
+            __file__), 'images', '1st.svg'), func=_add_1st_definition, cmd='click_1st_definition_button', tip='Add 1st Definition\n(Alt+1)', keys='Alt+1')]
+    if settings.config_values().display_all_definitions_button:
+        _buttons += [editor.addButton(icon=os.path.join(os.path.dirname(
+            __file__), 'images', 'All.svg'), func=_add_all_definitions, cmd='click_all_definitions_button', tip='Add All Definitions\n(Alt+A)', keys='Alt+A')]
+    if settings.config_values().display_translation_button:
+        _buttons += [editor.addButton(icon=os.path.join(os.path.dirname(
+            __file__), 'images', 'T.svg'), func=_add_translation, cmd='click_translation_button', tip='Add Translation\n(Alt+T)', keys='Alt+T')]
 
     return _buttons
+
+
+# def add_shortcuts(shortcuts: List[Tuple], editor: editor.Editor) -> List[Tuple]:
+#     shortcuts.append(("Ctrl+Shift+A", _add_all_definitions),)
+
+#     return shortcuts
 
 
 def new_play_button_css(web_content: webview.WebContent, context: Any) -> None:
@@ -410,7 +538,7 @@ def new_play_button_css(web_content: webview.WebContent, context: Any) -> None:
     Anki defined "replay-button svg" by "add_label_to_button.css" file.
     '''
 
-    if not(settings.config_values().add_play_button_labels):
+    if not(settings.config_values().add_labels_to_play_buttons):
         return
 
     # Below codes/explanations belong to Anki "webview_will_set_content" hook in genhooks_gui.py
@@ -454,16 +582,20 @@ def add_play_button_labels(text: str, card: Card, kind: str) -> BeautifulSoup.pr
     and audio/video filenames in the card.
     '''
 
-    if not(settings.config_values().add_play_button_labels):
+    if not(settings.config_values().add_labels_to_play_buttons):
         return
 
     # Function works in below steps:
     # 1- Checks the kind, it should be in either reviewer or previewer
     #    question or answer.
     #
+    #    Update: This condition is removed along with adding card.answer_av_tags()
+    #    to be labeled. This change is to show labels in answers and also card views as well as
+    #    question views.
+    #
     # 2- Extracts the word and audio/video filenames from the card.
     #
-    # 3- Considers "US", "GB" or "none" labels to each audio/video file.
+    # 3- Considers "USsettings.config_values().synonyms_and_antonyms_separatorGB" or "none" labels to each audio/video file.
     #    Purpose of this step is to distinguish between the audio/video
     #    files added by this add-on (labeled "US" or "GB") and other
     #    possible existing ones (labeled "none").
@@ -475,8 +607,8 @@ def add_play_button_labels(text: str, card: Card, kind: str) -> BeautifulSoup.pr
     #                    str(card) + "\n\nkind\n" + kind)
 
     # 1
-    if kind not in ('reviewQuestion', 'reviewAnswer', 'previewQuestion', 'previewAnswer'):
-        return text
+    # if kind not in ('reviewQuestion', 'reviewAnswer', 'previewQuestion', 'previewAnswer'):
+    #     return text
 
     # 2
     q_text = (card.render_output().question_text).replace('&nbsp;', ' ')
@@ -488,7 +620,8 @@ def add_play_button_labels(text: str, card: Card, kind: str) -> BeautifulSoup.pr
     # This change is to address this special case.
     word = re.sub('-', '_', word)
 
-    av_filenames = [av_tags.filename for av_tags in card.question_av_tags()]
+    av_filenames = [av_tags.filename for av_tags in (
+        card.question_av_tags() + card.answer_av_tags())]
 
     # For debugging
     # aqt.utils.showText("word\n" + word +

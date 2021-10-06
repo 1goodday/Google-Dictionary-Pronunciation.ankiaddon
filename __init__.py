@@ -6,6 +6,7 @@
 # https://github.com/1goodday/anki_addon_google_pronunciation
 # Licensed under MIT License
 
+from aqt.utils import shortcut
 from . import anki_funcs
 from aqt import gui_hooks
 from aqt import mw

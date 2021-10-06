@@ -18,6 +18,9 @@ Refer to [Add-on link on Anki website](https://ankiweb.net/shared/info/134663584
     * Meaning addition capability added
 * 3.0.0
     * Translation addition capability added
+* 4.0.0
+    * Specifying field numbers capability added
+    * Cosmetics customization improved
 
 ## Acknowledgments
 ##### Meaning addition made possible by:
