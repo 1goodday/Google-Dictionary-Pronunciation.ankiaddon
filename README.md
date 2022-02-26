@@ -21,6 +21,8 @@ Refer to [Add-on link on Anki website](https://ankiweb.net/shared/info/134663584
 * 4.0.0
     * Specifying field numbers capability added
     * Cosmetics customization improved
+* 5.0.0
+    * Batch edit capability added
 
 ## Acknowledgments
 ##### Meaning addition made possible by:

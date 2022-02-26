@@ -21,6 +21,10 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # function to them.
 gui_hooks.editor_did_init_buttons.append(anki_funcs.add_buttons)
 
+# Adds a menu with submenus to the context menu (right click menu)
+# of the browser
+gui_hooks.browser_will_show_context_menu.append(anki_funcs.add_context_menu)
+
 # Refer to notes in anki webview.py for this line of code.
 mw.addonManager.setWebExports(__name__, r"web/.*(css|js)")
 
