@@ -685,22 +685,42 @@ def _add_pronunciation_mp3s_single(editor: editor.Editor) -> None:
     if settings.config_values().US_pronunciation_first:
         if (requests.head(mp3_url_us).status_code == 200) and try_adding_US_pronunciation:
             file_path_us = editor.urlToFile(mp3_url_us)
+
+            # This extra line was added after Anki upgraded to to 2.1.5x (specifically 2.1.54 Qt5 and Qt6)
+            # The old versions didn't need the complete media file path to be passed to _addMedia
+            file_path_us = os.path.join(mw.col.media.dir(), file_path_us)
+
             editor.note.fields[settings.config_values(
             ).pronunciation_field] += editor._addMedia(file_path_us)
 
         if (requests.head(mp3_url_gb).status_code == 200) and try_adding_GB_pronunciation:
             file_path_gb = editor.urlToFile(mp3_url_gb)
+
+            # This extra line was added after Anki upgraded to to 2.1.5x (specifically 2.1.54 Qt5 and Qt6)
+            # The old versions didn't need the complete media file path to be passed to _addMedia
+            file_path_gb = os.path.join(mw.col.media.dir(), file_path_gb)
+
             editor.note.fields[settings.config_values(
             ).pronunciation_field] += editor._addMedia(file_path_gb)
 
     else:
         if (requests.head(mp3_url_gb).status_code == 200) and try_adding_GB_pronunciation:
             file_path_gb = editor.urlToFile(mp3_url_gb)
+
+            # This extra line was added after Anki upgraded to to 2.1.5x (specifically 2.1.54 Qt5 and Qt6)
+            # The old versions didn't need the complete media file path to be passed to _addMedia
+            file_path_gb = os.path.join(mw.col.media.dir(), file_path_gb)
+
             editor.note.fields[settings.config_values(
             ).pronunciation_field] += editor._addMedia(file_path_gb)
 
         if (requests.head(mp3_url_us).status_code == 200) and try_adding_US_pronunciation:
             file_path_us = editor.urlToFile(mp3_url_us)
+
+            # This extra line was added after Anki upgraded to to 2.1.5x (specifically 2.1.54 Qt5 and Qt6)
+            # The old versions didn't need the complete media file path to be passed to _addMedia
+            file_path_us = os.path.join(mw.col.media.dir(), file_path_us)
+
             editor.note.fields[settings.config_values(
             ).pronunciation_field] += editor._addMedia(file_path_us)
 
